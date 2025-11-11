@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'; // MODIFIED: Added useLocation
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 import { useDispatch } from 'react-redux';
@@ -25,11 +25,11 @@ function Layout({ children }) {
 
   return (
     <>
-      {!isLandingPage && <Navbar />} {/* ADDED: Conditional Navbar */}
+      {!isLandingPage && <Navbar />} {/* Conditional Navbar */}
       <div style={{ width: "100%", minHeight: "100vh" }}>
         {children}
       </div>
-      {!isLandingPage && <Footer />} {/* ADDED: Conditional Footer */}
+      {!isLandingPage && <Footer />} {/* Conditional Footer */}
     </>
   );
 }

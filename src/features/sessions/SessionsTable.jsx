@@ -1,83 +1,47 @@
-// import React, { useEffect } from 'react';
-// import { useDispatch, useSelector } from 'react-redux';
-// import { fetchSessions, removeSession } from './SessionsSlice';
-// import {
-//   Table, TableBody, TableCell, TableHead,
-//   TableRow, Button, Typography, Box
-// } from '@mui/material';
-
-
-// export default function SessionsTable({ groupId, status, userView = false }) {
-//   const dispatch = useDispatch();
-//   const { sessions } = useSelector((s) => s.sessions);
-//   useEffect(() => {
-//     dispatch(fetchSessions({ groupId, status }));
-//   }, [dispatch, groupId, status]);
-
-//   const handleDelete = (id) => dispatch(removeSession(id));
-
-
-//   return (
-//     <Box sx={{ mt: 3 }}>
-//       <Typography variant="h6" sx={{ mb: 1 }}>
-//         {status === 'active' ? 'Active Sessions' : 'Completed Sessions'}
-//       </Typography>
-//       <Table size="small">
-//         <TableHead>
-//           <TableRow>
-//             <TableCell>Title</TableCell>
-//             <TableCell>Description</TableCell>
-//             <TableCell>Start</TableCell>
-//             <TableCell>End</TableCell>
-//             {!userView && <TableCell>Action</TableCell>}
-//           </TableRow>
-//         </TableHead>
-//         <TableBody>
-//           {sessions.map((s) => (
-//             <TableRow key={s.id}>
-//               <TableCell>{s.title}</TableCell>
-//               <TableCell>{s.description}</TableCell>
-//               <TableCell>{s.start_time}</TableCell>
-//               <TableCell>{s.end_time}</TableCell>
-//               {!userView && (
-//                 <TableCell>
-//                   <Button color="error" onClick={() => handleDelete(s.id)}>
-//                     Delete
-//                   </Button>
-//                 </TableCell>
-//               )}
-//             </TableRow>
-//           ))}
-//         </TableBody>
-//       </Table>
-//     </Box>
-//   );
-// }
-import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchSessions, removeSession } from './SessionsSlice';
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchSessions, removeSession } from "./SessionsSlice";
 import {
-  Table, TableBody, TableCell, TableHead,
-  TableRow, Button, Typography, Box
-} from '@mui/material';
-import moment from 'moment';
-import { useNavigate } from 'react-router-dom';
-import AddIcon from '@mui/icons-material/Add';
-
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Button,
+  Typography,
+  Box,
+  Paper,
+  Chip,
+  TableContainer,
+} from "@mui/material";
+import moment from "moment";
+import { useNavigate } from "react-router-dom";
+import DeleteIcon from "@mui/icons-material/Delete";
+import AssignmentIcon from "@mui/icons-material/Assignment";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
 
 export default function SessionsTable({ groupId, status, userView = false }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { sessions } = useSelector((s) => s.sessions);
+  const { user } = useSelector((s) => s.auth); // Get current user
+  const { currentGroup } = useSelector((s) => s.groups); // Get current group
 
   useEffect(() => {
     dispatch(fetchSessions({ groupId }));
   }, [dispatch, groupId]);
 
-  const handleDelete = (id) => dispatch(removeSession(id));
-  const handleAddTask = (sessionId) => {
-    navigate('/add-task', { state: { sessionId } });
+  const handleDelete = (id) => {
+    dispatch(removeSession(id)).then(() => {
+      dispatch(fetchSessions({ groupId })); // Refresh sessions after deletion
+    });
   };
+  const handleAddTask = (sessionId) => {
+    navigate("/add-task", { state: { sessionId } });
+  };
+
+  // Check if current user is the group admin - using == for type-safe comparison, loose equality operator
+  const isAdmin = user?.id == currentGroup?.created_by?.id;
 
   const filterSessionsByTime = () => {
     const now = moment();
@@ -87,9 +51,9 @@ export default function SessionsTable({ groupId, status, userView = false }) {
 
       const isExpired = endTime.isBefore(now);
 
-      if (status === 'active') {
+      if (status === "active") {
         return !isExpired;
-      } else if (status === 'completed') {
+      } else if (status === "completed") {
         return isExpired;
       }
       return true;
@@ -99,70 +63,100 @@ export default function SessionsTable({ groupId, status, userView = false }) {
   const filteredSessions = filterSessionsByTime();
 
   return (
-    <Box sx={{ mt: 3 }}>
-      <Typography variant="h6" sx={{ mb: 1 }}>
-        {status === 'active' ? 'Active Sessions' : 'Completed Sessions'}
-      </Typography>
-      <Table size="small">
-        <TableHead>
-          <TableRow>
-            <TableCell>Title</TableCell>
-            <TableCell>Description</TableCell>
-            <TableCell>Start</TableCell>
-            <TableCell>End</TableCell>
-            {!userView && <TableCell>Action</TableCell>}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {filteredSessions.length === 0 ? (
+    <Box sx={{ mt: 4 }}>
+      {/* Section Header */}
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+        <AccessTimeIcon color="secondary" />
+        <Typography variant="h5" fontWeight="bold">
+          {status === "active" ? "Active Sessions" : "Completed Sessions"}
+        </Typography>
+      </Box>
+
+      {/* Enhanced Table */}
+      <TableContainer component={Paper} elevation={2} sx={{ borderRadius: 2 }}>
+        <Table>
+          <TableHead sx={{ bgcolor: "grey.100" }}>
             <TableRow>
-              <TableCell colSpan={userView ? 4 : 5} align="center">
-                <Typography variant="body2" color="text.secondary">
-                  No {status} sessions
-                </Typography>
-              </TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Title</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Description</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Start</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>End</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Status</TableCell>
+              {!userView && (
+                <TableCell sx={{ fontWeight: "bold" }}>Actions</TableCell>
+              )}
             </TableRow>
-          ) : (
-            filteredSessions.map((s) => {
-              const now = moment();
-              const endTime = moment(s.end_time);
-              const isActive = !endTime.isBefore(now);
-              return <TableRow key={s.id}>
-                <TableCell>{s.title}</TableCell>
-                <TableCell>{s.description}</TableCell>
-                <TableCell>{moment(s.start_time).format('lll')}</TableCell>
-                <TableCell>{moment(s.end_time).format('lll')}</TableCell>
-                <TableCell>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    {/* Add Task - Show to EVERYONE for active sessions */}
-                    {isActive && (
-                      <Button
-                        variant="contained"
-                        size="small"
-                        onClick={() => handleAddTask(s.id)}
-                      >
-                        Tasks
-                      </Button>
-                    )}
-
-                    {/* Delete - Only for ADMIN */}
-                    {!userView && (
-                      <Button
-                        color="error"
-                        size="small"
-                        onClick={() => handleDelete(s.id)}
-                      >
-                        Delete
-                      </Button>
-                    )}
-                  </Box>
+          </TableHead>
+          <TableBody>
+            {filteredSessions.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={userView ? 5 : 6}
+                  align="center"
+                  sx={{ py: 4 }}
+                >
+                  <Typography variant="body1" color="text.secondary">
+                    No {status} sessions
+                  </Typography>
                 </TableCell>
-
               </TableRow>
-            })
-          )}
-        </TableBody>
-      </Table>
+            ) : (
+              filteredSessions.map((s) => {
+                const now = moment();
+                const endTime = moment(s.end_time);
+                const isActive = !endTime.isBefore(now);
+                return (
+                  <TableRow
+                    key={s.id}
+                    sx={{
+                      "&:hover": { bgcolor: "grey.50" },
+                      transition: "background-color 0.2s",
+                    }}
+                  >
+                    <TableCell sx={{ fontWeight: 500 }}>{s.title}</TableCell>
+                    <TableCell>{s.description}</TableCell>
+                    <TableCell>{moment(s.start_time).format("lll")}</TableCell>
+                    <TableCell>{moment(s.end_time).format("lll")}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={isActive ? "Active" : "Completed"}
+                        color={isActive ? "success" : "default"}
+                        size="small"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: "flex", gap: 1 }}>
+                        {isActive && (
+                          <Button
+                            variant="contained"
+                            size="small"
+                            startIcon={<AssignmentIcon />}
+                            onClick={() => handleAddTask(s.id)}
+                          >
+                            Tasks
+                          </Button>
+                        )}
+
+                        {isAdmin && (
+                          <Button
+                            variant="outlined"
+                            color="error"
+                            size="small"
+                            startIcon={<DeleteIcon />}
+                            onClick={() => handleDelete(s.id)}
+                          >
+                            Delete
+                          </Button>
+                        )}
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Box>
   );
 }

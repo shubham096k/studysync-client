@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchMyGroups, leaveGroup } from "./GroupsSlice";
+import { fetchMyGroups, leaveGroup, fetchGroups } from "./GroupsSlice";
 import {
   Grid,
   Card,
@@ -31,11 +31,13 @@ export default function MyGroups() {
     try {
       await dispatch(leaveGroup(id)).unwrap();
       setOpen(true);
+      dispatch(fetchMyGroups()); // Refresh my groups
+      dispatch(fetchGroups()); // Refresh explore groups
     } catch {}
   };
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      {/* ADDED: Page Header */}
+      {/* Page Header */}
       <Box sx={{ mb: 4 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
           <PeopleIcon sx={{ fontSize: 40, color: "secondary.main" }} />
@@ -48,7 +50,7 @@ export default function MyGroups() {
         </Typography>
       </Box>
 
-      {/* ADDED: Empty state when no groups */}
+      {/* Empty state when no groups */}
       {myGroups.length === 0 ? (
         <Box
           sx={{
@@ -73,7 +75,7 @@ export default function MyGroups() {
           </Button>
         </Box>
       ) : (
-        /* MODIFIED: Enhanced card grid */
+        /* card grid */
         <Grid container spacing={3}>
           {myGroups.map((g) => (
             <Grid item xs={12} sm={6} md={4} key={g.id}>
@@ -125,9 +127,9 @@ export default function MyGroups() {
                   <Box sx={{ display: "flex", gap: 1, mt: "auto" }}>
                     <Button
                       variant="contained"
-                      fullWidth
                       startIcon={<VisibilityIcon />}
                       onClick={() => navigate(`/my-groups/${g.id}`)}
+                      sx={{ flex: 1 }}
                     >
                       View
                     </Button>
@@ -136,6 +138,7 @@ export default function MyGroups() {
                       color="error"
                       startIcon={<ExitToAppIcon />}
                       onClick={() => handleLeave(g.id)}
+                      sx={{ flex: 1 }}
                     >
                       Leave
                     </Button>

@@ -1,7 +1,10 @@
 import axios from '../../utils/axiosConfig';
-const getDocuments = () => {
-  return axios.get('/documents/').then((r) => r.data);
+
+const getDocuments = (groupId) => { // groupId parameter
+  const url = groupId ? `/documents/?group=${groupId}` : '/documents/'; // Filter by group
+  return axios.get(url).then((r) => r.data);
 }
+
 const uploadDocument = (formData) =>
   axios.post('/documents/', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },

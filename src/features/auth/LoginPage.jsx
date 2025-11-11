@@ -16,6 +16,7 @@ import LoginIcon from "@mui/icons-material/Login";
 export default function LoginPage() {
   const [form, setForm] = useState({ username: "", password: "" });
   const [open, setOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(""); // for displaying the error details
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -27,7 +28,20 @@ export default function LoginPage() {
     try {
       await dispatch(login(form)).unwrap();
       navigate("/explore");
-    } catch {
+    } catch (error) {
+      // console.log("Login error:", error); // Debug
+
+      // Extract error message - prioritize details field
+      let errorMsg = "Invalid credentials. Please try again.";
+
+      if (error?.details) {
+        // "No active account found with the given credentials"
+        errorMsg = error.details;
+      } else if (error?.message) {
+        errorMsg = error.message;
+      }
+
+      setErrorMessage(errorMsg);
       setOpen(true);
     }
   };
@@ -84,7 +98,7 @@ export default function LoginPage() {
         autoHideDuration={3000}
       >
         <Alert severity="error" sx={{ width: "100%" }}>
-          Invalid credentials
+          {errorMessage}
         </Alert>
       </Snackbar>
     </Container>

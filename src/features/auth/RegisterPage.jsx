@@ -18,6 +18,7 @@ export default function RegisterPage() {
   const [open, setOpen] = useState(false);
   const [emailError, setEmailError] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [usernameError, setUsernameError] = useState(""); // state for username errors
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -35,27 +36,37 @@ export default function RegisterPage() {
     }
   };
 
+  // Username change handler
+  const handleUsernameChange = (e) => {
+    const username = e.target.value.toLowerCase();
+    setForm({ ...form, username });
+    setUsernameError(""); // Clear backend error when user types
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Clear previous errors
+    setUsernameError("");
+    setEmailError("");
     try {
       await dispatch(register(form)).unwrap();
       navigate("/login");
     } catch (error) {
-      // Capture error
-      // Check for specific error messages
-      if (
-        error?.message?.includes("username") ||
-        error?.error?.includes("username")
-      ) {
-        setErrorMessage("Username already exists. Please choose another one.");
-      } else if (
-        error?.message?.includes("email") ||
-        error?.error?.includes("email")
-      ) {
-        setErrorMessage("Email already exists. Please use another email.");
-      } else {
-        setErrorMessage("Registration failed. Please try again.");
+      console.log("Registration error:", error); // Debug log
+
+      // Extract field-specific errors from backend response
+      if (error?.details?.username) {
+        setUsernameError(error.details.username[0]); // "A user with that username already exists."
       }
+      if (error?.details?.email) {
+        setEmailError(error.details.email[0]);
+      }
+
+      // Show general message in Snackbar
+      setErrorMessage(
+        error?.message || "Registration failed. Please try again."
+      );
       setOpen(true);
     }
   };
@@ -72,11 +83,11 @@ export default function RegisterPage() {
           label="Username"
           name="username"
           margin="normal"
-          onChange={(e) =>
-            setForm({ ...form, username: e.target.value.toLowerCase() })
-          } // Convert to lowercase
+          onChange={handleUsernameChange}
           value={form.username}
           required
+          error={!!usernameError}
+          helperText={usernameError || ""}
         />
         <TextField
           fullWidth
@@ -115,7 +126,6 @@ export default function RegisterPage() {
             form.password.length < 6
           } // Disable conditions
         >
-          {" "}
           Register
         </Button>
       </Box>
